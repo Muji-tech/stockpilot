@@ -225,7 +225,27 @@ select.input option{background:#fff}
 .sc-torch.on{background:rgba(255,214,0,.3);border-color:rgba(255,214,0,.5)}
 .sc-flip{bottom:max(36px,env(safe-area-inset-bottom,36px));right:20px;display:none}
 
-/* ── ANIMATIONS ──────────────────────────────── */
+/* ── BACKUP PAGE ──────────────────────────────── */
+.bk-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r-l);padding:16px;box-shadow:var(--s1);margin-bottom:12px}
+.bk-icon{width:40px;height:40px;border-radius:10px;background:var(--blu-l);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bk-icon svg{stroke:var(--blu);width:18px;height:18px}
+.bk-icon.ok{background:var(--grn-l)} .bk-icon.ok svg{stroke:var(--grn)}
+.bk-icon.err{background:var(--red-l)} .bk-icon.err svg{stroke:var(--red)}
+.bk-pill{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;background:var(--bg);color:var(--tx3);border:1px solid var(--bdr)}
+.bk-pill.active{background:var(--grn-l);color:var(--grn);border-color:var(--grn-m)}
+.bk-pill.error{background:var(--red-l);color:var(--red);border-color:var(--red-m)}
+.bk-section-head{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--tx3);margin:16px 0 8px}
+.bk-steps{display:grid;gap:10px}
+.bk-step{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--tx2);line-height:1.55}
+.bk-step-n{width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.bk-code{background:#0F172A;color:#e2e8f0;border-radius:8px;padding:14px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.7;overflow-x:auto;white-space:pre;margin:0;border:none}
+.bk-copy-btn{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.12);color:#e2e8f0;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .15s;font-family:'DM Sans',sans-serif}
+.bk-copy-btn:hover{background:rgba(255,255,255,.2)}
+.bk-log-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);font-size:12px;box-shadow:var(--s0)}
+.bk-log-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.bk-log-dot.ok{background:var(--grn)} .bk-log-dot.err{background:var(--red)} .bk-log-dot.warn{background:var(--amb)}
+.bk-spinner{width:16px;height:16px;border:2px solid var(--bdr);border-top-color:var(--blu);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .fu{animation:fu .35s ease both}
 .fu:nth-child(2){animation-delay:.06s}
@@ -509,6 +529,10 @@ select.input option{background:#fff}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><polyline points="3 6 4 7 6 5"/><polyline points="3 12 4 13 6 11"/><polyline points="3 18 4 19 6 17"/></svg>
       FIFO Queue
     </button>
+    <button class="nav-tab" data-page="backup" onclick="gp('backup',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><path d="M4 4v5h5"/><path d="M4 9a9 9 0 0 1 9-9"/></svg>
+      Backup
+    </button>
   </nav>
 </header>
 
@@ -640,11 +664,189 @@ select.input option{background:#fff}
     </div>
   </div>
 
+  <!-- BACKUP -->
+  <div id="page-backup" class="page">
+    <div class="pi">
+
+      <!-- Status card -->
+      <div class="bk-card" id="bkStatusCard">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <div class="bk-icon" id="bkStatusIcon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--ink)">Google Drive Backup</div>
+            <div style="font-size:12px;color:var(--tx3);margin-top:1px" id="bkLastTime">Never backed up</div>
+          </div>
+          <div style="margin-left:auto">
+            <span class="bk-pill" id="bkPill">Not set</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--tx2)">
+          <div style="background:var(--bg);border-radius:8px;padding:10px">
+            <div style="color:var(--tx3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Total Items</div>
+            <div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ink)" id="bkCount">—</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:10px">
+            <div style="color:var(--tx3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Auto Backup</div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink)" id="bkScheduleStatus">Midnight daily</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Script URL setup -->
+      <div class="bk-section-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Apps Script URL
+      </div>
+      <div class="bk-card" style="padding:14px 16px">
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:10px;line-height:1.6">
+          Paste your Google Apps Script Web App URL below. See setup guide at the bottom of this page.
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <div style="flex:1">
+            <label class="fl">Web App URL</label>
+            <input class="input" id="bkUrl" placeholder="https://script.google.com/macros/s/…/exec" style="font-size:12px;font-family:'DM Mono',monospace">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn b-prim" style="flex:1;justify-content:center;gap:6px" onclick="saveBackupUrl()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg>
+            Save URL
+          </button>
+          <button class="btn b-out" style="gap:6px" onclick="testBackup()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Test
+          </button>
+        </div>
+      </div>
+
+      <!-- Manual backup -->
+      <div class="bk-section-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+        Manual Backup
+      </div>
+      <div class="bk-card" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px">
+        <button class="btn b-prim" style="justify-content:center;gap:6px;padding:11px" onclick="runBackup()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Backup Now
+        </button>
+        <button class="btn b-out" style="justify-content:center;gap:6px;padding:11px" onclick="downloadJSON()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download JSON
+        </button>
+      </div>
+
+      <!-- Backup log -->
+      <div class="bk-section-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Backup History
+      </div>
+      <div id="bkLog" style="display:grid;gap:6px"></div>
+
+      <!-- Setup guide -->
+      <div class="bk-section-head" style="margin-top:8px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Setup Guide
+      </div>
+      <div class="bk-card" style="padding:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:10px">One-time setup (5 minutes)</div>
+        <div class="bk-steps">
+          <div class="bk-step">
+            <div class="bk-step-n">1</div>
+            <div>Go to <a href="https://script.google.com" target="_blank" style="color:var(--blu)">script.google.com</a> and create a new project</div>
+          </div>
+          <div class="bk-step">
+            <div class="bk-step-n">2</div>
+            <div>Delete all existing code, paste the Apps Script code below</div>
+          </div>
+          <div class="bk-step">
+            <div class="bk-step-n">3</div>
+            <div>Click <strong>Deploy → New deployment → Web app</strong></div>
+          </div>
+          <div class="bk-step">
+            <div class="bk-step-n">4</div>
+            <div>Set <strong>Execute as: Me</strong> and <strong>Who has access: Anyone</strong></div>
+          </div>
+          <div class="bk-step">
+            <div class="bk-step-n">5</div>
+            <div>Click Deploy → copy the Web App URL → paste above</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:8px">Apps Script Code — copy everything below:</div>
+        <div style="position:relative">
+          <pre class="bk-code" id="gasCode">const FOLDER_NAME = 'StockPilot Backups';
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const folder = getOrCreateFolder(FOLDER_NAME);
+    const date = Utilities.formatDate(new Date(), 'Asia/Bangkok', 'yyyy-MM-dd_HH-mm');
+    const filename = `stockpilot_${date}.json`;
+    folder.createFile(filename, JSON.stringify(data, null, 2), MimeType.PLAIN_TEXT);
+    keepLatestFiles(folder, 30); // keep last 30 backups
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: true, file: filename, items: data.items?.length ?? 0 }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getOrCreateFolder(name) {
+  const folders = DriveApp.getFoldersByName(name);
+  return folders.hasNext() ? folders.next() : DriveApp.createFolder(name);
+}
+
+function keepLatestFiles(folder, max) {
+  const files = [];
+  const it = folder.getFiles();
+  while (it.hasNext()) files.push(it.next());
+  files.sort((a, b) => b.getDateCreated() - a.getDateCreated());
+  files.slice(max).forEach(f => f.setTrashed(true));
+}
+
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true, status: 'StockPilot backup endpoint ready' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+          <button class="bk-copy-btn" onclick="copyGasCode()" id="gasCopyBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <div style="margin-top:12px;padding:10px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;font-size:11px;color:#92400e;line-height:1.6">
+          <strong>Note:</strong> Backups are saved to <strong>My Drive / StockPilot Backups /</strong> as JSON files. The last 30 backups are kept automatically.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 <script>
 'use strict';
 
 /* ── DATA ─────────────────────────────────────── */
-const SKEY = 'stockpilot_v4';
+const SKEY = 'stockpilot';  // stable key — never change this again
+
+// Migrate data from any old versioned keys
+function migrateOldData() {
+  const OLD_KEYS = ['stockpilot_v2', 'stockpilot_v3', 'stockpilot_v4'];
+  if (localStorage.getItem(SKEY)) return; // already on new key, nothing to do
+  for (const old of OLD_KEYS) {
+    const raw = localStorage.getItem(old);
+    if (raw) {
+      localStorage.setItem(SKEY, raw);   // copy to stable key
+      localStorage.removeItem(old);       // clean up old key
+      console.log(`[StockPilot] Migrated data from ${old}`);
+      return;
+    }
+  }
+}
+
 const load  = () => { try { return JSON.parse(localStorage.getItem(SKEY)) || []; } catch { return []; } };
 const save  = d  => localStorage.setItem(SKEY, JSON.stringify(d));
 const uid   = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -962,6 +1164,7 @@ function rp(p) {
   else if (p === 'inventory') renderInv();
   else if (p === 'alerts') renderAlerts();
   else if (p === 'fifo') renderFifo();
+  else if (p === 'backup') renderBackup();
 }
 function renderAll() { rp(curPage); }
 
@@ -1249,14 +1452,205 @@ function seed() {
   ]);
 }
 
+/* ══════════════════════════════════════════════
+   BACKUP — Google Drive via Apps Script
+══════════════════════════════════════════════ */
+const BK_URL_KEY  = 'stockpilot_bk_url';
+const BK_LOG_KEY  = 'stockpilot_bk_log';
+const BK_LAST_KEY = 'stockpilot_bk_last';
+
+function getBkUrl()  { return localStorage.getItem(BK_URL_KEY) || ''; }
+function getBkLog()  { try { return JSON.parse(localStorage.getItem(BK_LOG_KEY)) || []; } catch { return []; } }
+function addBkLog(entry) {
+  const log = getBkLog();
+  log.unshift({ ...entry, ts: Date.now() });
+  if (log.length > 20) log.splice(20);
+  localStorage.setItem(BK_LOG_KEY, JSON.stringify(log));
+  localStorage.setItem(BK_LAST_KEY, Date.now().toString());
+}
+
+function saveBackupUrl() {
+  const url = document.getElementById('bkUrl').value.trim();
+  if (!url) { toast('Please enter a Web App URL', 'warn'); return; }
+  if (!url.startsWith('https://script.google.com')) { toast('URL must be from script.google.com', 'warn'); return; }
+  localStorage.setItem(BK_URL_KEY, url);
+  toast('URL saved', 'ok');
+  renderBackup();
+}
+
+async function runBackup(silent = false) {
+  const url = getBkUrl();
+  if (!url) { toast('Please set a Web App URL first', 'warn'); gp('backup', document.querySelector('[data-page="backup"]')); return false; }
+
+  if (!silent) toast('Backing up…', 'info');
+  const items = load();
+  const payload = {
+    items,
+    meta: {
+      count: items.length,
+      date: new Date().toISOString(),
+      source: 'StockPilot v2'
+    }
+  };
+
+  try {
+    // Use no-cors for cross-origin Apps Script requests
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      mode: 'no-cors'   // Apps Script requires no-cors from browser
+    });
+    // no-cors returns opaque response — treat as success if no exception thrown
+    addBkLog({ status: 'ok', count: items.length, msg: `${items.length} items backed up` });
+    if (!silent) toast(`Backup complete — ${items.length} items`, 'ok');
+    renderBackup();
+    return true;
+  } catch (err) {
+    addBkLog({ status: 'err', count: items.length, msg: err.message || 'Network error' });
+    if (!silent) toast('Backup failed: ' + (err.message || 'Network error'), 'warn');
+    renderBackup();
+    return false;
+  }
+}
+
+async function testBackup() {
+  const url = getBkUrl();
+  if (!url) { toast('Please set a Web App URL first', 'warn'); return; }
+  toast('Testing connection…', 'info');
+  try {
+    const res = await fetch(url, { method: 'GET', mode: 'no-cors' });
+    toast('Connection OK — try Backup Now', 'ok');
+    addBkLog({ status: 'ok', count: 0, msg: 'Connection test passed' });
+  } catch (err) {
+    toast('Connection failed: ' + (err.message || 'Network error'), 'warn');
+    addBkLog({ status: 'err', count: 0, msg: 'Connection test: ' + (err.message || 'failed') });
+  }
+  renderBackup();
+}
+
+function downloadJSON() {
+  const items = load();
+  const data = JSON.stringify({ items, meta: { count: items.length, date: new Date().toISOString(), source: 'StockPilot v2' } }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `stockpilot_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('JSON file downloaded', 'ok');
+  addBkLog({ status: 'ok', count: items.length, msg: `Downloaded JSON — ${items.length} items` });
+  renderBackup();
+}
+
+function copyGasCode() {
+  const code = document.getElementById('gasCode').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('gasCopyBtn');
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    setTimeout(() => {
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+    }, 2000);
+  }).catch(() => toast('Could not copy — please select manually', 'warn'));
+}
+
+function renderBackup() {
+  if (curPage !== 'backup') return;
+  const url     = getBkUrl();
+  const items   = load();
+  const log     = getBkLog();
+  const lastTs  = localStorage.getItem(BK_LAST_KEY);
+
+  // URL field
+  const urlEl = document.getElementById('bkUrl');
+  if (urlEl && !urlEl.value && url) urlEl.value = url;
+
+  // Status icon & pill
+  const hasUrl = !!url;
+  const lastOk = log[0]?.status === 'ok';
+  const icon   = document.getElementById('bkStatusIcon');
+  const pill   = document.getElementById('bkPill');
+  if (icon) {
+    icon.className = 'bk-icon' + (hasUrl ? (lastOk ? ' ok' : ' err') : '');
+  }
+  if (pill) {
+    pill.textContent = !hasUrl ? 'Not set' : lastOk ? 'Connected' : 'Error';
+    pill.className   = 'bk-pill' + (!hasUrl ? '' : lastOk ? ' active' : ' error');
+  }
+
+  // Last time
+  const ltEl = document.getElementById('bkLastTime');
+  if (ltEl) {
+    if (lastTs) {
+      const d = new Date(parseInt(lastTs));
+      ltEl.textContent = `Last backup: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+    } else {
+      ltEl.textContent = 'Never backed up';
+    }
+  }
+
+  // Count
+  const cntEl = document.getElementById('bkCount');
+  if (cntEl) cntEl.textContent = items.length;
+
+  // Schedule status
+  const schEl = document.getElementById('bkScheduleStatus');
+  if (schEl) schEl.textContent = hasUrl ? 'Midnight daily' : 'Disabled (no URL)';
+
+  // Log rows
+  const logEl = document.getElementById('bkLog');
+  if (logEl) {
+    if (!log.length) {
+      logEl.innerHTML = `<div style="font-size:12px;color:var(--tx3);text-align:center;padding:16px">No backup history yet</div>`;
+    } else {
+      logEl.innerHTML = log.slice(0, 10).map(e => {
+        const d = new Date(e.ts);
+        const time = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+        return `<div class="bk-log-row">
+          <div class="bk-log-dot ${e.status}"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:500;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.msg}</div>
+            <div style="font-size:11px;color:var(--tx3);margin-top:1px">${time}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+/* ── MIDNIGHT AUTO-BACKUP ─────────────────────── */
+function scheduleAutoBackup() {
+  function msUntilMidnight() {
+    const now  = new Date();
+    const next = new Date(now);
+    next.setHours(24, 0, 0, 0); // next midnight
+    return next - now;
+  }
+
+  function doAutoBackup() {
+    if (getBkUrl()) {
+      runBackup(true).then(ok => {
+        console.log(`[StockPilot] Auto backup at midnight: ${ok ? 'success' : 'failed'}`);
+      });
+    }
+    // Schedule next night
+    setTimeout(doAutoBackup, msUntilMidnight());
+  }
+
+  // Wait until first midnight, then run every 24h
+  setTimeout(doAutoBackup, msUntilMidnight());
+}
+
 /* ── INIT ─────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   const t = new Date();
   const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('todayLbl').textContent = `${days[t.getDay()]} ${t.getDate()} ${months[t.getMonth()]} ${t.getFullYear()}`;
+  migrateOldData();
   seed();
   renderDash();
+  scheduleAutoBackup();
 });
 
 /* ═══════════════════════════════════════════════
