@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StockPilot">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0F172A">
+<meta name="description" content="FEFO Inventory Manager — track expiry dates, manage stock locations">
+<title>StockPilot — FEFO Inventory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F7FA; --surf:#FFF; --bdr:#E3E8F0; --bdr2:#C9D3E0;
+  --tx:#0F172A; --tx2:#4B5563; --tx3:#9CA3AF; --tx4:#D1D5DB;
+  --red:#DC2626;   --red-l:#FEF2F2;  --red-m:#FECACA;
+  --amb:#D97706;   --amb-l:#FFFBEB;  --amb-m:#FDE68A;
+  --blu:#2563EB;   --blu-l:#EFF6FF;  --blu-m:#BFDBFE;
+  --grn:#059669;   --grn-l:#ECFDF5;  --grn-m:#A7F3D0;
+  --ink:#0F172A;
+  --r-s:6px; --r:10px; --r-l:14px;
+  --s0:0 1px 2px rgba(15,23,42,.05);
+  --s1:0 1px 4px rgba(15,23,42,.07),0 1px 2px rgba(15,23,42,.04);
+  --s2:0 4px 14px rgba(15,23,42,.09),0 1px 3px rgba(15,23,42,.05);
+  --s3:0 12px 36px rgba(15,23,42,.13),0 4px 8px rgba(15,23,42,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;min-height:100dvh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select{font-family:inherit}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:99px}
+
+/* ── HEADER ──────────────────────────────── */
+.hdr{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.94);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);border-bottom:1px solid var(--bdr)}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:13px 16px 10px;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:34px;height:34px;background:var(--ink);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-name{font-size:15px;font-weight:700;letter-spacing:-.03em;color:var(--ink)}
+.brand-sub{font-size:10px;color:var(--tx3);letter-spacing:.07em;text-transform:uppercase;font-weight:600;line-height:1;margin-top:1px}
+.hdr-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--tx3)}
+
+/* ── NAV ──────────────────────────────────── */
+.nav{display:flex;padding:0 8px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-tab{position:relative;padding:9px 12px 10px;font-size:13px;font-weight:500;color:var(--tx3);white-space:nowrap;transition:color .15s;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:5px}
+.nav-tab.active{color:var(--blu);border-bottom-color:var(--blu);font-weight:600}
+.nav-tab svg{width:14px;height:14px;flex-shrink:0}
+.n-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 3px;background:var(--red);color:#fff;font-size:9px;font-weight:700;border-radius:99px;margin-left:2px}
+
+/* ── LAYOUT ──────────────────────────────── */
+.page{display:none;padding:16px;padding-bottom:36px}
+.page.active{display:block}
+.pi{max-width:560px;margin:0 auto}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-t{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3)}
+
+/* ── STAT CARDS ──────────────────────────── */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.sc{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r-l);padding:15px 14px 13px;box-shadow:var(--s1);cursor:pointer;transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden;user-select:none}
+.sc:hover{box-shadow:var(--s2)}
+.sc:active{transform:scale(.97)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c);border-radius:99px 99px 0 0}
+.sc.cr{--c:var(--red)} .sc.wa{--c:var(--amb)} .sc.mo{--c:var(--blu)} .sc.sa{--c:var(--grn)}
+.sc-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--c) 12%,transparent);margin-bottom:10px}
+.sc-icon svg{width:14px;height:14px;stroke:var(--c)}
+.sc-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:4px}
+.sc-val{font-family:'DM Mono',monospace;font-size:30px;font-weight:500;color:var(--c);line-height:1}
+.sc-sub{font-size:11px;color:var(--tx3);margin-top:3px}
+
+/* ── OVERVIEW BAR ────────────────────────── */
+.ov{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r-l);padding:16px;box-shadow:var(--s1);margin-bottom:16px}
+.ov-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.ov-title{font-size:13px;font-weight:600;color:var(--tx)}
+.ov-num{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--ink)}
+.seg{height:5px;border-radius:99px;background:var(--bg);overflow:hidden;display:flex;gap:1px;margin-bottom:12px}
+.sf{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.34,1.2,.64,1)}
+.leg{display:flex;gap:12px;flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2)}
+.ld{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ── LOCATION CARDS ──────────────────────── */
+.lc-wrap{display:grid;gap:8px;margin-bottom:16px}
+.lc{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:var(--s1)}
+.lc-ico{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lc-ico svg{width:16px;height:16px}
+.lc-ico.boh{background:#EFF6FF} .lc-ico.boh svg{stroke:var(--blu)}
+.lc-ico.sp {background:#F0FDF4} .lc-ico.sp  svg{stroke:var(--grn)}
+.lc-ico.ca {background:#FFF7ED} .lc-ico.ca  svg{stroke:var(--amb)}
+.lc-name{font-size:13px;font-weight:600}
+.lc-cnt{font-size:11px;color:var(--tx3);margin-top:1px}
+.lc-status{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:12px;font-weight:500}
+.lc-status.ok{color:var(--grn)} .lc-status.warn{color:var(--red);font-weight:600}
+
+/* ── ITEM CARD ───────────────────────────── */
+.ic{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r-l);overflow:hidden;box-shadow:var(--s1);animation:ci .2s ease both}
+@keyframes ci{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.ic-stripe{height:3px;background:var(--c)}
+.ic-body{padding:12px 14px 10px}
+.ic-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.ic-name{font-size:14px;font-weight:600;color:var(--ink);line-height:1.3}
+.ic-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px}
+.ic-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--tx3);background:var(--bg);border:1px solid var(--bdr);border-radius:4px;padding:1px 6px}
+.db{text-align:right;flex-shrink:0}
+.dn{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--c);line-height:1}
+.dl{font-size:9px;color:var(--tx3);letter-spacing:.05em;text-transform:uppercase;margin-top:1px}
+.dd{font-size:10px;color:var(--tx3);margin-top:2px;font-family:'DM Mono',monospace}
+.ic-chips{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.chip svg{width:10px;height:10px;flex-shrink:0}
+.chip-st{background:var(--c-l);color:var(--c);border:1px solid var(--c-m)}
+.chip-loc{background:var(--bg);color:var(--tx2);border:1px solid var(--bdr);font-weight:500}
+.chip-loc svg{stroke:var(--tx3)}
+.chip-qty{font-family:'DM Mono',monospace;background:var(--bg);color:var(--tx2);border:1px solid var(--bdr);margin-left:auto;font-weight:500}
+.ic-hint{font-size:11px;color:var(--c);font-weight:500;padding:7px 0 4px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:4px}
+.ic-hint svg{width:12px;height:12px;stroke:var(--c);flex-shrink:0}
+.ic-foot{display:flex;align-items:center;gap:6px;padding:8px 14px 10px;background:var(--bg);flex-wrap:wrap}
+
+/* status helpers */
+.s-cr{--c:var(--red);--c-l:var(--red-l);--c-m:var(--red-m)}
+.s-wa{--c:var(--amb);--c-l:var(--amb-l);--c-m:var(--amb-m)}
+.s-mo{--c:var(--blu);--c-l:var(--blu-l);--c-m:var(--blu-m)}
+.s-sa{--c:var(--grn);--c-l:var(--grn-l);--c-m:var(--grn-m)}
+
+/* ── BUTTONS ──────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;border-radius:var(--r-s);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid transparent;white-space:nowrap;user-select:none}
+.btn:active{transform:scale(.96)}
+.btn svg{width:13px;height:13px;flex-shrink:0}
+.b-prim{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:0 1px 3px rgba(15,23,42,.2)}
+.b-prim:hover{background:#1e293b}
+.b-out{background:var(--surf);color:var(--tx2);border-color:var(--bdr2);box-shadow:var(--s1)}
+.b-out:hover{border-color:var(--tx3);color:var(--tx)}
+.b-ghost{background:transparent;color:var(--tx3);padding:8px 10px}
+.b-ghost:hover{background:var(--bg);color:var(--tx2)}
+.b-del{background:var(--red-l);color:var(--red);border-color:var(--red-m)}
+.b-del:hover{background:#fee2e2}
+.b-move{background:var(--surf);color:var(--tx2);border:1px solid var(--bdr2);box-shadow:var(--s0);font-size:11px;padding:5px 10px}
+.b-move:hover{border-color:var(--blu);color:var(--blu)}
+.b-add{background:var(--ink);color:#fff;padding:9px 14px;border-radius:var(--r);font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(15,23,42,.22);display:flex;align-items:center;gap:6px}
+.b-add svg{width:14px;height:14px}
+
+/* ── SEARCH / PILLS ───────────────────────── */
+.sw{position:relative;margin-bottom:12px}
+.sw-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none}
+.sw-ico svg{width:15px;height:15px;stroke:var(--tx3)}
+.s-in{width:100%;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:10px 12px 10px 36px;color:var(--tx);font-size:14px;outline:none;box-shadow:var(--s1);transition:border-color .15s,box-shadow .15s}
+.s-in:focus{border-color:var(--blu);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.s-in::placeholder{color:var(--tx4)}
+.pr{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;margin-bottom:14px}
+.pr::-webkit-scrollbar{display:none}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border-radius:99px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--bdr);background:var(--surf);color:var(--tx2);white-space:nowrap;transition:all .15s;box-shadow:var(--s0);flex-shrink:0}
+.pill svg{width:11px;height:11px;flex-shrink:0}
+.p-all{background:var(--ink);color:#fff;border-color:var(--ink)}
+.p-red{background:var(--red);color:#fff;border-color:var(--red)}
+.p-amb{background:var(--amb);color:#fff;border-color:var(--amb)}
+.p-blu{background:var(--blu);color:#fff;border-color:var(--blu)}
+.p-grn{background:var(--grn);color:#fff;border-color:var(--grn)}
+
+/* ── FORM ──────────────────────────────────── */
+.input{width:100%;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r-s);padding:10px 12px;color:var(--tx);font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.input:focus{border-color:var(--blu);background:var(--surf);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.input::placeholder{color:var(--tx4)}
+select.input option{background:#fff}
+.fl{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--tx3);margin-bottom:6px}
+.uw{position:relative}
+.usb{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--ink);color:#fff;border:none;border-radius:5px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .15s;font-family:'DM Sans',sans-serif}
+.usb:hover{background:#1e293b}
+.usb svg{width:13px;height:13px;flex-shrink:0}
+
+/* ── BOTTOM SHEET ──────────────────────────── */
+.ov-lay{position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(6px);z-index:400;opacity:0;pointer-events:none;transition:opacity .25s;display:flex;align-items:flex-end;justify-content:center}
+.ov-lay.open{opacity:1;pointer-events:all}
+.sheet{background:var(--surf);border-radius:20px 20px 0 0;width:100%;max-width:520px;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);max-height:92dvh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 -8px 40px rgba(15,23,42,.16)}
+.ov-lay.open .sheet{transform:translateY(0)}
+.sh-handle{width:36px;height:4px;background:var(--bdr2);border-radius:99px;margin:12px auto 0;flex-shrink:0}
+.sh-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 14px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.sh-title{font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
+.sh-title svg{width:18px;height:18px;stroke:var(--ink)}
+.sh-body{padding:20px;overflow-y:auto;flex:1;display:grid;gap:16px}
+.sh-foot{padding:16px 20px 28px;border-top:1px solid var(--bdr);flex-shrink:0}
+
+/* ── CONFIRM ───────────────────────────────── */
+.conf-lay{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(8px);z-index:500;opacity:0;pointer-events:none;transition:opacity .2s;display:flex;align-items:center;justify-content:center;padding:24px}
+.conf-lay.open{opacity:1;pointer-events:all}
+.conf-box{background:var(--surf);border-radius:var(--r-l);padding:24px;width:100%;max-width:320px;box-shadow:var(--s3);border:1px solid var(--bdr);transform:scale(.95);transition:transform .2s cubic-bezier(.34,1.3,.64,1)}
+.conf-lay.open .conf-box{transform:scale(1)}
+.conf-icon{width:40px;height:40px;border-radius:10px;background:var(--red-l);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.conf-icon svg{width:20px;height:20px;stroke:var(--red)}
+
+/* ── TOAST ──────────────────────────────────── */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;border-radius:var(--r);padding:10px 18px;font-size:13px;font-weight:500;z-index:999;white-space:nowrap;box-shadow:var(--s3);transition:transform .35s cubic-bezier(.34,1.4,.64,1);pointer-events:none;display:flex;align-items:center;gap:7px}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast svg{width:14px;height:14px;flex-shrink:0}
+
+/* ── SCANNER ────────────────────────────────── */
+.scan-lay{position:fixed;inset:0;background:#000;z-index:600;opacity:0;pointer-events:none;transition:opacity .25s}
+.scan-lay.open{opacity:1;pointer-events:all}
+#scv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scan-ui{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.scan-ui::before,.scan-ui::after{content:'';position:absolute;left:0;right:0;height:28%;pointer-events:none}
+.scan-ui::before{top:0;background:linear-gradient(to bottom,rgba(0,0,0,.75),transparent)}
+.scan-ui::after{bottom:0;background:linear-gradient(to top,rgba(0,0,0,.75),transparent)}
+.sc-frm{position:relative;width:min(280px,72vw);aspect-ratio:1.8/1}
+.sc-frm::before,.sc-frm::after,.sc-br,.sc-bl{content:'';position:absolute;width:22px;height:22px;border-color:#fff;border-style:solid}
+.sc-frm::before{top:0;left:0;border-width:3px 0 0 3px;border-radius:3px 0 0 0}
+.sc-frm::after {top:0;right:0;border-width:3px 3px 0 0;border-radius:0 3px 0 0}
+.sc-br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 3px 0}
+.sc-bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 3px}
+.sc-line{position:absolute;left:5px;right:5px;height:2px;background:linear-gradient(90deg,transparent,var(--blu),#93c5fd,var(--blu),transparent);border-radius:99px;box-shadow:0 0 10px rgba(37,99,235,.9);animation:scm 2.2s ease-in-out infinite}
+@keyframes scm{0%{top:5px;opacity:0}8%{opacity:1}92%{opacity:1}100%{top:calc(100% - 5px);opacity:0}}
+.sc-frm.hit::before,.sc-frm.hit::after,.sc-frm.hit .sc-br,.sc-frm.hit .sc-bl{border-color:#34d399;transition:border-color .15s}
+.sc-frm.hit .sc-line{background:linear-gradient(90deg,transparent,#059669,#34d399,#059669,transparent);box-shadow:0 0 10px rgba(5,150,105,.9);animation:none;top:50%}
+.sc-hint{margin-top:20px;color:rgba(255,255,255,.82);font-size:13px;font-weight:500;text-align:center;padding:0 36px;line-height:1.55;position:relative;z-index:1}
+.sc-code{margin-top:12px;background:rgba(255,255,255,.13);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:7px 20px;font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:#fff;opacity:0;transform:translateY(5px);transition:opacity .25s,transform .25s;position:relative;z-index:1;max-width:80vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-code.show{opacity:1;transform:translateY(0)}
+.sc-btn{position:absolute;width:42px;height:42px;background:rgba(255,255,255,.16);backdrop-filter:blur(12px);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:all;border:1px solid rgba(255,255,255,.22);z-index:2;transition:background .15s;color:#fff}
+.sc-btn:active{background:rgba(255,255,255,.28)}
+.sc-btn svg{width:17px;height:17px;stroke:#fff}
+.sc-x{top:max(16px,env(safe-area-inset-top,16px));right:16px}
+.sc-torch{top:max(16px,env(safe-area-inset-top,16px));left:16px}
+.sc-torch.on{background:rgba(255,214,0,.3);border-color:rgba(255,214,0,.5)}
+.sc-flip{bottom:max(36px,env(safe-area-inset-bottom,36px));right:20px;display:none}
+
+/* ── ANIMATIONS ──────────────────────────────── */
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fu .35s ease both}
+.fu:nth-child(2){animation-delay:.06s}
+.fu:nth-child(3){animation-delay:.12s}
+.fu:nth-child(4){animation-delay:.18s}
+
+/* ── EMPTY ───────────────────────────────────── */
+.empty{text-align:center;padding:44px 20px;color:var(--tx3)}
+.empty svg{width:36px;height:36px;stroke:var(--tx4);margin-bottom:10px}
+.empty-t{font-size:13px;font-weight:500}
+.empty-s{font-size:12px;color:var(--tx4);margin-top:4px}
+
+/* divider */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── PWA INSTALL BANNER ────────────────────────── */
+#install-banner{position:fixed;bottom:0;left:0;right:0;z-index:300;background:var(--ink);color:#fff;padding:14px 16px max(16px,env(safe-area-inset-bottom,16px));display:flex;align-items:center;gap:12px;transform:translateY(120%);transition:transform .4s cubic-bezier(.34,1.2,.64,1);box-shadow:0 -4px 24px rgba(15,23,42,.25)}
+#install-banner.show{transform:translateY(0)}
+.ib-icon{width:40px;height:40px;background:#1e293b;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ib-icon svg{width:20px;height:20px;stroke:#fff}
+.ib-text{flex:1;min-width:0}
+.ib-title{font-size:13px;font-weight:700;line-height:1.2}
+.ib-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
+.ib-actions{display:flex;gap:7px;flex-shrink:0}
+.ib-install{background:#2563EB;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;white-space:nowrap}
+.ib-install:active{background:#1d4ed8}
+.ib-dismiss{background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:7px;padding:8px 10px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center}
+.ib-dismiss svg{width:14px;height:14px;stroke:#fff}
+
+/* ── OFFLINE BAR ───────────────────────────────── */
+#offline-bar{position:fixed;top:0;left:0;right:0;z-index:500;background:#92400e;color:#fef3c7;padding:8px 16px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;font-weight:600;transform:translateY(-100%);transition:transform .3s ease;letter-spacing:.01em}
+#offline-bar.show{transform:translateY(0)}
+#offline-bar svg{width:13px;height:13px;stroke:#fef3c7;flex-shrink:0}
+
+/* ── STANDALONE SAFE AREA ──────────────────────── */
+@media (display-mode:standalone){
+  .hdr{padding-top:env(safe-area-inset-top,0)}
+  main{padding-bottom:env(safe-area-inset-bottom,0)}
+}
+</style>
+</head>
+<body>
+
+<!-- OFFLINE BAR -->
+<div id="offline-bar">
+  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+  You're offline — data saved locally
+</div>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner">
+  <div class="ib-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="8" width="22" height="14" rx="2"/><path d="M7 8V6a5 5 0 0 1 10 0v2"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="10" y1="15" x2="14" y2="15"/></svg>
+  </div>
+  <div class="ib-text">
+    <div class="ib-title">Install StockPilot</div>
+    <div class="ib-sub">Add to home screen for offline use</div>
+  </div>
+  <div class="ib-actions">
+    <button class="ib-install" onclick="installPWA()">Install</button>
+    <button class="ib-dismiss" onclick="dismissInstall()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" id="toast-ico"></svg><span id="toast-msg"></span></div>
+
+<!-- CONFIRM -->
+<div class="conf-lay" id="confLay">
+  <div class="conf-box">
+    <div class="conf-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </div>
+    <p style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:6px">Delete item?</p>
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:20px" id="confMsg">This action cannot be undone.</p>
+    <div style="display:flex;gap:8px">
+      <button class="btn b-out" style="flex:1" onclick="closeConf()">Cancel</button>
+      <button class="btn b-del" style="flex:1" id="confBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SCANNER -->
+<div class="scan-lay" id="scanLay">
+  <video id="scv" autoplay playsinline muted></video>
+  <div class="scan-ui">
+    <div class="sc-frm" id="scFrm">
+      <div class="sc-br"></div><div class="sc-bl"></div>
+      <div class="sc-line"></div>
+    </div>
+    <div class="sc-hint" id="scHint">Align barcode within the frame</div>
+    <div class="sc-code" id="scCode"></div>
+  </div>
+  <button class="sc-btn sc-x"     onclick="closeScan()">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <button class="sc-btn sc-torch" id="scTorch" onclick="toggleTorch()">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6c0-2.21-1.79-4-4-4S10 3.79 10 6v4l-2 2v2h12v-2l-2-2V6z"/><line x1="14" y1="22" x2="14" y2="18"/><line x1="10" y1="22" x2="10" y2="18"/><line x1="14" y1="22" x2="10" y2="22"/></svg>
+  </button>
+  <button class="sc-btn sc-flip" id="scFlip" onclick="flipCam()">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"/><path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14"/></svg>
+  </button>
+</div>
+
+<!-- ADD SHEET -->
+<div class="ov-lay" id="addLay">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr">
+      <div class="sh-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+        Add Item
+      </div>
+      <button class="btn b-ghost" onclick="closeAdd()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="sh-body">
+      <div>
+        <label class="fl">UPC / Barcode</label>
+        <div class="uw">
+          <input class="input" id="f_upc" placeholder="Scan or type UPC" inputmode="numeric" style="font-family:'DM Mono',monospace;padding-right:90px">
+          <button class="usb" type="button" onclick="openScan('f_upc')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><path d="M16 16h2v2h-2zM18 18h2v2h-2zM16 20h2M20 16v2"/></svg>
+            Scan
+          </button>
+        </div>
+      </div>
+      <div><label class="fl">Product Name <span style="color:var(--red)">*</span></label><input class="input" id="f_name" placeholder="Enter product name"></div>
+      <div class="g2">
+        <div><label class="fl">Box ID</label><input class="input" id="f_box" placeholder="BOX-001" style="font-family:'DM Mono',monospace"></div>
+        <div><label class="fl">Quantity</label><input class="input" id="f_qty" type="number" min="1" value="1" inputmode="numeric"></div>
+      </div>
+      <div><label class="fl">Location</label>
+        <select class="input" id="f_loc">
+          <option value="BOH">BOH — Back of House</option>
+          <option value="Span">Span — Shelf</option>
+          <option value="CA">CA — Clearance Area</option>
+        </select>
+      </div>
+      <div><label class="fl">Expiry Date <span style="color:var(--red)">*</span></label><input class="input" id="f_exp" type="date"></div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn b-prim" style="width:100%;padding:12px;font-size:14px;justify-content:center;gap:7px" onclick="addItem()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Save Item
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT SHEET -->
+<div class="ov-lay" id="editLay">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr">
+      <div class="sh-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit Item
+      </div>
+      <button class="btn b-ghost" onclick="closeEdit()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="sh-body">
+      <div>
+        <label class="fl">UPC / Barcode</label>
+        <div class="uw">
+          <input class="input" id="e_upc" placeholder="UPC" style="font-family:'DM Mono',monospace;padding-right:90px">
+          <button class="usb" type="button" onclick="openScan('e_upc')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><path d="M16 16h2v2h-2zM18 18h2v2h-2zM16 20h2M20 16v2"/></svg>
+            Scan
+          </button>
+        </div>
+      </div>
+      <div><label class="fl">Product Name <span style="color:var(--red)">*</span></label><input class="input" id="e_name" placeholder="Product name"></div>
+      <div class="g2">
+        <div><label class="fl">Box ID</label><input class="input" id="e_box" placeholder="BOX-001" style="font-family:'DM Mono',monospace"></div>
+        <div><label class="fl">Quantity</label><input class="input" id="e_qty" type="number" min="1"></div>
+      </div>
+      <div><label class="fl">Location</label>
+        <select class="input" id="e_loc">
+          <option value="BOH">BOH — Back of House</option>
+          <option value="Span">Span — Shelf</option>
+          <option value="CA">CA — Clearance Area</option>
+        </select>
+      </div>
+      <div><label class="fl">Expiry Date <span style="color:var(--red)">*</span></label><input class="input" id="e_exp" type="date"></div>
+    </div>
+    <div class="sh-foot">
+      <button class="btn b-prim" style="width:100%;padding:12px;font-size:14px;justify-content:center;gap:7px" onclick="saveEdit()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ APP ═══════ -->
+<header class="hdr">
+  <div class="hdr-top">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="8" width="22" height="14" rx="2"/><path d="M7 8V6a5 5 0 0 1 10 0v2"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="10" y1="15" x2="14" y2="15"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">StockPilot</div>
+        <div class="brand-sub">FEFO Manager</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="hdr-date" id="todayLbl">—</div>
+      <button class="b-add" onclick="openAdd()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Item
+      </button>
+    </div>
+  </div>
+  <nav class="nav">
+    <button class="nav-tab active" data-page="dashboard" onclick="gp('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-tab" data-page="inventory" onclick="gp('inventory',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Inventory
+    </button>
+    <button class="nav-tab" data-page="alerts" onclick="gp('alerts',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Alerts
+      <span class="n-badge" id="alertDot" style="display:none"></span>
+    </button>
+  </nav>
+</header>
+
+<main>
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <div class="pi">
+      <div class="sg">
+        <div class="sc cr fu" onclick="goAlerts('critical')">
+          <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <div class="sc-lbl">Critical</div>
+          <div class="sc-val" id="cc">0</div>
+          <div class="sc-sub">0 – 2 days</div>
+        </div>
+        <div class="sc wa fu" onclick="goAlerts('warning')">
+          <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+          <div class="sc-lbl">Warning</div>
+          <div class="sc-val" id="cw">0</div>
+          <div class="sc-sub">3 – 7 days</div>
+        </div>
+        <div class="sc mo fu" onclick="goAlerts('monitor')">
+          <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="sc-lbl">Monitor</div>
+          <div class="sc-val" id="cm">0</div>
+          <div class="sc-sub">8 – 14 days</div>
+        </div>
+        <div class="sc sa fu" onclick="gp('inventory',document.querySelector('[data-page=inventory]'))">
+          <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <div class="sc-lbl">Safe</div>
+          <div class="sc-val" id="cs">0</div>
+          <div class="sc-sub">&gt; 14 days</div>
+        </div>
+      </div>
+
+      <div class="ov fu">
+        <div class="ov-row">
+          <div class="ov-title">Total Inventory</div>
+          <div class="ov-num"><span id="ct">0</span> <span style="font-size:13px;color:var(--tx3);font-weight:400">items</span></div>
+        </div>
+        <div class="seg">
+          <div class="sf" id="br" style="background:var(--red);width:0%"></div>
+          <div class="sf" id="bw" style="background:var(--amb);width:0%"></div>
+          <div class="sf" id="bm" style="background:var(--blu);width:0%"></div>
+          <div class="sf" id="bs" style="background:var(--grn);width:0%"></div>
+        </div>
+        <div class="leg">
+          <div class="li"><div class="ld" style="background:var(--red)"></div>Critical</div>
+          <div class="li"><div class="ld" style="background:var(--amb)"></div>Warning</div>
+          <div class="li"><div class="ld" style="background:var(--blu)"></div>Monitor</div>
+          <div class="li"><div class="ld" style="background:var(--grn)"></div>Safe</div>
+        </div>
+      </div>
+
+      <div class="sec-hd fu"><div class="sec-t">By Location</div></div>
+      <div class="lc-wrap fu" id="locGrid"></div>
+
+      <div class="sec-hd" style="margin-top:4px"><div class="sec-t">Needs Action</div></div>
+      <div id="urgList" style="display:grid;gap:10px"></div>
+    </div>
+  </div>
+
+  <!-- INVENTORY -->
+  <div id="page-inventory" class="page">
+    <div class="pi">
+      <div class="sw">
+        <div class="sw-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <input class="s-in" id="srch" placeholder="Search name, UPC, Box ID…" oninput="renderInv()">
+      </div>
+      <div class="pr">
+        <button class="pill p-all" data-loc="ALL"  onclick="setLoc('ALL',this)">All</button>
+        <button class="pill"       data-loc="BOH"  onclick="setLoc('BOH',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="11" height="11"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          BOH
+        </button>
+        <button class="pill"       data-loc="Span" onclick="setLoc('Span',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="11" height="11"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Span
+        </button>
+        <button class="pill"       data-loc="CA"   onclick="setLoc('CA',this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="11" height="11"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          CA
+        </button>
+      </div>
+      <div class="pr">
+        <button class="pill p-all" data-sf="ALL"      onclick="setStat('ALL',this)">All Status</button>
+        <button class="pill"       data-sf="critical" onclick="setStat('critical',this)">Critical</button>
+        <button class="pill"       data-sf="warning"  onclick="setStat('warning',this)">Warning</button>
+        <button class="pill"       data-sf="monitor"  onclick="setStat('monitor',this)">Monitor</button>
+        <button class="pill"       data-sf="safe"     onclick="setStat('safe',this)">Safe</button>
+      </div>
+      <div id="invCnt" style="font-size:12px;color:var(--tx3);margin-bottom:10px"></div>
+      <div id="invList" style="display:grid;gap:10px"></div>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <div id="page-alerts" class="page">
+    <div class="pi">
+      <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r-l);padding:14px 16px;margin-bottom:14px;box-shadow:var(--s1)">
+        <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:10px">Filter by status</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="pill p-all" data-af="ALL"      onclick="fAlert('ALL',this)">All</button>
+          <button class="pill"       data-af="critical" onclick="fAlert('critical',this)">Critical</button>
+          <button class="pill"       data-af="warning"  onclick="fAlert('warning',this)">Warning</button>
+          <button class="pill"       data-af="monitor"  onclick="fAlert('monitor',this)">Monitor</button>
+        </div>
+      </div>
+      <div id="alertList" style="display:grid;gap:10px"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+'use strict';
+
+/* ── DATA ─────────────────────────────────────── */
+const SKEY = 'stockpilot_v3';
+const load  = () => { try { return JSON.parse(localStorage.getItem(SKEY)) || []; } catch { return []; } };
+const save  = d  => localStorage.setItem(SKEY, JSON.stringify(d));
+const uid   = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+/* ── DATE / STATUS ────────────────────────────── */
+function daysUntil(s) {
+  if (!s) return 9999;
+  const [y, m, d] = s.split('-').map(Number);
+  const exp = new Date(y, m - 1, d), now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return Math.ceil((exp - now) / 86400000);
+}
+
+function getSt(days) {
+  if (days < 0)  return { key:'critical', lbl:'Expired',  cls:'s-cr', action:'Destroy / Return' };
+  if (days <= 2) return { key:'critical', lbl:'Critical',  cls:'s-cr', action:'Move to CA immediately' };
+  if (days <= 7) return { key:'warning',  lbl:'Warning',   cls:'s-wa', action:'Move to CA' };
+  if (days <= 14)return { key:'monitor',  lbl:'Monitor',   cls:'s-mo', action:'Move BOH → Span' };
+  return               { key:'safe',     lbl:'Safe',      cls:'s-sa', action:'' };
+}
+
+// SVG icons for status
+const ST_ICON = {
+  critical: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="10" height="10"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  warning:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="10" height="10"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  monitor:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="10" height="10"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  safe:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>`,
+};
+
+function fmtDate(s) {
+  if (!s) return '—';
+  const [y, m, d] = s.split('-');
+  return `${d}/${m}/${String(y).slice(2)}`;
+}
+function toISO() {
+  const t = new Date();
+  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+}
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── STATE ────────────────────────────────────── */
+let locF = 'ALL', stF = 'ALL', alF = 'ALL';
+let curPage = 'dashboard', editId = null, confCb = null;
+
+/* ── ITEM CARD ────────────────────────────────── */
+function iCard(it) {
+  const days = daysUntil(it.expiryDate), st = getSt(days);
+  const locIcon = {
+    BOH:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="10" height="10"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+    Span: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="10" height="10"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/></svg>`,
+    CA:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="10" height="10"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`,
+  }[it.location] || '';
+
+  const moveBtns = ['BOH','Span','CA']
+    .filter(l => l !== it.location)
+    .map(l => `<button class="btn b-move" onclick="moveItem('${it.id}','${l}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="11" height="11"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      ${l}
+    </button>`).join('');
+
+  return `<div class="ic ${st.cls}">
+    <div class="ic-stripe"></div>
+    <div class="ic-body">
+      <div class="ic-top">
+        <div style="flex:1;min-width:0">
+          <div class="ic-name">${esc(it.productName)}</div>
+          <div class="ic-meta">
+            ${it.upc   ? `<span class="ic-tag">UPC ${esc(it.upc)}</span>` : ''}
+            ${it.boxId ? `<span class="ic-tag">${esc(it.boxId)}</span>` : ''}
+          </div>
+        </div>
+        <div class="db">
+          <div class="dn">${days < 0 ? '!' : days}</div>
+          <div class="dl">${days < 0 ? 'expired' : 'days'}</div>
+          <div class="dd">${fmtDate(it.expiryDate)}</div>
+        </div>
+      </div>
+      <div class="ic-chips">
+        <span class="chip chip-st">${ST_ICON[st.key]} ${st.lbl}</span>
+        <span class="chip chip-loc">${locIcon} ${it.location}</span>
+        <span class="chip chip-qty">×${it.qty}</span>
+      </div>
+      ${st.action ? `<div class="ic-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        ${st.action}
+      </div>` : ''}
+    </div>
+    <div class="ic-foot">
+      ${moveBtns}
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button class="btn b-out" style="padding:5px 10px;font-size:12px;gap:4px" onclick="openEdit('${it.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit
+        </button>
+        <button class="btn b-del" style="padding:5px 10px;font-size:12px;gap:4px" onclick="confDel('${it.id}','${esc(it.productName)}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── DASHBOARD ────────────────────────────────── */
+function renderDash() {
+  const items = load();
+  const c = { critical:0, warning:0, monitor:0, safe:0 };
+  items.forEach(it => c[getSt(daysUntil(it.expiryDate)).key]++);
+  document.getElementById('cc').textContent = c.critical;
+  document.getElementById('cw').textContent = c.warning;
+  document.getElementById('cm').textContent = c.monitor;
+  document.getElementById('cs').textContent = c.safe;
+  document.getElementById('ct').textContent = items.length;
+
+  const alCnt = c.critical + c.warning;
+  const dot = document.getElementById('alertDot');
+  dot.style.display = alCnt ? 'inline-flex' : 'none';
+  dot.textContent   = alCnt > 9 ? '9+' : alCnt;
+
+  const t = items.length || 1;
+  document.getElementById('br').style.width = (c.critical / t * 100) + '%';
+  document.getElementById('bw').style.width = (c.warning  / t * 100) + '%';
+  document.getElementById('bm').style.width = (c.monitor  / t * 100) + '%';
+  document.getElementById('bs').style.width = (c.safe     / t * 100) + '%';
+
+  // Location grid
+  const lm = {};
+  items.forEach(it => {
+    if (!lm[it.location]) lm[it.location] = { total:0, crit:0 };
+    lm[it.location].total++;
+    if (getSt(daysUntil(it.expiryDate)).key === 'critical') lm[it.location].crit++;
+  });
+
+  const locMeta = {
+    BOH:  { cls:'boh', name:'Back of House', desc:'BOH',
+      icon:`<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>` },
+    Span: { cls:'sp',  name:'Span Shelf',    desc:'Span',
+      icon:`<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>` },
+    CA:   { cls:'ca',  name:'Clearance Area', desc:'CA',
+      icon:`<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>` },
+  };
+
+  document.getElementById('locGrid').innerHTML = Object.entries(lm).map(([loc, d]) => {
+    const lx = locMeta[loc] || { cls:'boh', name:loc, desc:loc, icon:'' };
+    return `<div class="lc">
+      <div class="lc-ico ${lx.cls}">${lx.icon}</div>
+      <div><div class="lc-name">${lx.name}</div><div class="lc-cnt">${d.total} items</div></div>
+      <div class="lc-status ${d.crit ? 'warn' : 'ok'}">
+        ${d.crit
+          ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ${d.crit} critical`
+          : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> OK`}
+      </div>
+    </div>`;
+  }).join('') || '<div style="color:var(--tx3);font-size:13px;text-align:center;padding:16px">No data yet</div>';
+
+  const urg = [...items]
+    .sort((a,b) => daysUntil(a.expiryDate) - daysUntil(b.expiryDate))
+    .filter(it => getSt(daysUntil(it.expiryDate)).key !== 'safe')
+    .slice(0, 5);
+
+  document.getElementById('urgList').innerHTML = urg.length
+    ? urg.map(iCard).join('')
+    : `<div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <div class="empty-t">All clear</div>
+        <div class="empty-s">No urgent actions needed</div>
+       </div>`;
+}
+
+/* ── INVENTORY ────────────────────────────────── */
+function renderInv() {
+  const items = load();
+  const q = (document.getElementById('srch')?.value || '').toLowerCase();
+  let f = items.filter(it => {
+    const s = getSt(daysUntil(it.expiryDate));
+    return (locF === 'ALL' || it.location === locF)
+        && (stF  === 'ALL' || s.key === stF)
+        && (!q || (it.productName||'').toLowerCase().includes(q)
+                || (it.upc||'').toLowerCase().includes(q)
+                || (it.boxId||'').toLowerCase().includes(q));
+  });
+  f.sort((a,b) => daysUntil(a.expiryDate) - daysUntil(b.expiryDate));
+  document.getElementById('invCnt').textContent = `Showing ${f.length} of ${items.length} items`;
+  document.getElementById('invList').innerHTML = f.length
+    ? f.map(iCard).join('')
+    : `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><div class="empty-t">No results</div><div class="empty-s">Try adjusting your filters</div></div>`;
+}
+
+/* ── ALERTS ───────────────────────────────────── */
+function renderAlerts() {
+  const items = load();
+  const f = items
+    .filter(it => { const k = getSt(daysUntil(it.expiryDate)).key; return alF === 'ALL' ? k !== 'safe' : k === alF; })
+    .sort((a,b) => daysUntil(a.expiryDate) - daysUntil(b.expiryDate));
+  document.getElementById('alertList').innerHTML = f.length
+    ? f.map(iCard).join('')
+    : `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><div class="empty-t">No alerts</div><div class="empty-s">All items are within safe range</div></div>`;
+}
+
+/* ── CRUD ─────────────────────────────────────── */
+function addItem() {
+  const name = document.getElementById('f_name').value.trim();
+  const exp  = document.getElementById('f_exp').value;
+  if (!name || !exp) { toast('Please fill in product name and expiry date', 'warn'); return; }
+  const items = load();
+  items.push({ id:uid(), upc:document.getElementById('f_upc').value.trim(), productName:name, boxId:document.getElementById('f_box').value.trim(), qty:parseInt(document.getElementById('f_qty').value)||1, location:document.getElementById('f_loc').value, expiryDate:exp });
+  save(items); closeAdd(); renderAll(); toast('Item added successfully', 'ok');
+}
+
+function moveItem(id, loc) {
+  const items = load(), i = items.findIndex(x => x.id === id);
+  if (i < 0) return;
+  items[i].location = loc; save(items); renderAll(); toast(`Moved to ${loc}`, 'ok');
+}
+
+function openEdit(id) {
+  const it = load().find(x => x.id === id); if (!it) return;
+  editId = id;
+  document.getElementById('e_upc').value  = it.upc  || '';
+  document.getElementById('e_name').value = it.productName || '';
+  document.getElementById('e_box').value  = it.boxId || '';
+  document.getElementById('e_qty').value  = it.qty  || 1;
+  document.getElementById('e_loc').value  = it.location || 'BOH';
+  document.getElementById('e_exp').value  = it.expiryDate || '';
+  document.getElementById('editLay').classList.add('open');
+}
+
+function saveEdit() {
+  if (!editId) return;
+  const name = document.getElementById('e_name').value.trim();
+  const exp  = document.getElementById('e_exp').value;
+  if (!name || !exp) { toast('Please fill in required fields', 'warn'); return; }
+  const items = load(), i = items.findIndex(x => x.id === editId);
+  if (i < 0) return;
+  Object.assign(items[i], { upc:document.getElementById('e_upc').value.trim(), productName:name, boxId:document.getElementById('e_box').value.trim(), qty:parseInt(document.getElementById('e_qty').value)||1, location:document.getElementById('e_loc').value, expiryDate:exp });
+  save(items); closeEdit(); renderAll(); toast('Changes saved', 'ok');
+}
+
+function confDel(id, name) {
+  document.getElementById('confMsg').textContent = `"${name}" will be permanently removed.`;
+  confCb = () => { save(load().filter(x => x.id !== id)); renderAll(); toast('Item deleted', 'ok'); };
+  document.getElementById('confLay').classList.add('open');
+}
+function closeConf() { document.getElementById('confLay').classList.remove('open'); confCb = null; }
+document.getElementById('confBtn').onclick = () => { if (confCb) confCb(); closeConf(); };
+
+/* ── NAV ──────────────────────────────────────── */
+function gp(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  (el || document.querySelector(`[data-page="${page}"]`)).classList.add('active');
+  curPage = page; rp(page);
+}
+function rp(p) {
+  if (p === 'dashboard') renderDash();
+  else if (p === 'inventory') renderInv();
+  else if (p === 'alerts') renderAlerts();
+}
+function renderAll() { rp(curPage); }
+
+function goAlerts(f) {
+  alF = f; gp('alerts', document.querySelector('[data-page="alerts"]'));
+  document.querySelectorAll('[data-af]').forEach(b => b.className = 'pill');
+  const cl = { ALL:'p-all', critical:'p-red', warning:'p-amb', monitor:'p-blu' }[f];
+  document.querySelector(`[data-af="${f}"]`)?.classList.add(cl);
+}
+function setLoc(l, el) {
+  locF = l; document.querySelectorAll('[data-loc]').forEach(b => b.className = 'pill');
+  el.classList.add('p-all'); renderInv();
+}
+function setStat(s, el) {
+  stF = s; document.querySelectorAll('[data-sf]').forEach(b => b.className = 'pill');
+  const cl = { ALL:'p-all', critical:'p-red', warning:'p-amb', monitor:'p-blu', safe:'p-grn' }[s];
+  el.classList.add(cl); renderInv();
+}
+function fAlert(a, el) {
+  alF = a; document.querySelectorAll('[data-af]').forEach(b => b.className = 'pill');
+  if (el) { const cl = { ALL:'p-all', critical:'p-red', warning:'p-amb', monitor:'p-blu' }[a]; el.classList.add(cl); }
+  renderAlerts();
+}
+
+/* ── MODALS ───────────────────────────────────── */
+function openAdd() {
+  ['f_upc','f_name','f_box'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f_qty').value = '1';
+  document.getElementById('f_loc').value = 'BOH';
+  document.getElementById('f_exp').value = toISO();
+  document.getElementById('addLay').classList.add('open');
+  setTimeout(() => document.getElementById('f_upc').focus(), 350);
+}
+function closeAdd()  { document.getElementById('addLay').classList.remove('open'); }
+function closeEdit() { document.getElementById('editLay').classList.remove('open'); editId = null; }
+['addLay','editLay'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    if (e.target.id === id) { id === 'addLay' ? closeAdd() : closeEdit(); }
+  });
+});
+
+/* ── TOAST ────────────────────────────────────── */
+const TOAST_ICONS = {
+  ok:   `<polyline points="20 6 9 17 4 12"/>`,
+  warn: `<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
+  info: `<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>`,
+};
+let _tt;
+function toast(msg, type = 'info') {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-ico').innerHTML = TOAST_ICONS[type] || TOAST_ICONS.info;
+  document.getElementById('toast-msg').textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+/* ── SCANNER ──────────────────────────────────── */
+let _sTgt = null, _stream = null, _active = false, _locked = false;
+let _raf = null, _devices = [], _dIdx = 0, _det = null, _torch = false;
+
+async function openScan(targetId) {
+  _sTgt = targetId;
+  if (!navigator.mediaDevices?.getUserMedia) { toast('Camera not supported by this browser', 'warn'); return; }
+
+  _det = null;
+  if (typeof BarcodeDetector !== 'undefined') {
+    try { _det = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','qr_code'] }); }
+    catch { _det = null; }
+  }
+
+  document.getElementById('scanLay').classList.add('open');
+  _setHint('Opening camera…');
+  document.getElementById('scCode').classList.remove('show');
+  document.getElementById('scFrm').classList.remove('hit');
+  _active = true; _torch = false;
+  document.getElementById('scTorch').classList.remove('on');
+
+  try {
+    const all = await navigator.mediaDevices.enumerateDevices();
+    _devices = all.filter(d => d.kind === 'videoinput');
+    const bi  = _devices.findIndex(d => /back|rear|environment/i.test(d.label));
+    _dIdx = bi >= 0 ? bi : (_devices.length > 1 ? 1 : 0);
+    const flipBtn = document.getElementById('scFlip');
+    flipBtn.style.display = _devices.length > 1 ? 'flex' : 'none';
+    await _startCam();
+  } catch(err) { _camErr(err); }
+}
+
+async function _startCam() {
+  _stopStream(); if (!_active) return;
+  const devId = _devices[_dIdx]?.deviceId;
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { ...(devId ? { deviceId: { exact: devId } } : { facingMode: { ideal: 'environment' } }), width:{ ideal:1280 }, height:{ ideal:720 } }
+  });
+  _stream = stream;
+  const v = document.getElementById('scv');
+  v.srcObject = stream;
+  await v.play().catch(() => {});
+  _locked = false;
+  if (_det) { _setHint('Align barcode within the frame'); _loop(v); }
+  else       { _setHint('Auto-scan not supported.\nPlease type UPC manually.'); }
+}
+
+function _loop(v) {
+  if (!_active) return;
+  _raf = requestAnimationFrame(async () => {
+    if (!_active || _locked)     { _loop(v); return; }
+    if (v.readyState < 2)        { _loop(v); return; }
+    try { const r = await _det.detect(v); if (r.length > 0) { _onCode(r[0].rawValue); return; } } catch {}
+    _loop(v);
+  });
+}
+
+function _onCode(code) {
+  if (_locked || !code) return;
+  _locked = true;
+  if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
+  document.getElementById('scFrm').classList.add('hit');
+  const cd = document.getElementById('scCode'); cd.textContent = code; cd.classList.add('show');
+  _setHint('Scan successful');
+  if (navigator.vibrate) navigator.vibrate([40, 15, 40]);
+  setTimeout(() => {
+    const el = document.getElementById(_sTgt);
+    if (el) { el.value = code; el.dispatchEvent(new Event('input', { bubbles:true })); }
+    closeScan(); toast(`Scanned: ${code}`, 'ok');
+    const nx = _sTgt === 'f_upc' ? 'f_name' : 'e_name';
+    setTimeout(() => document.getElementById(nx)?.focus(), 100);
+  }, 650);
+}
+
+function closeScan() {
+  _active = false;
+  if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
+  _stopStream();
+  document.getElementById('scanLay').classList.remove('open');
+  document.getElementById('scFrm').classList.remove('hit');
+}
+function _stopStream() {
+  if (_stream) { _stream.getTracks().forEach(t => t.stop()); _stream = null; }
+  document.getElementById('scv').srcObject = null;
+}
+function _setHint(t) { document.getElementById('scHint').textContent = t; }
+function _camErr(err) {
+  const m = { NotAllowedError:'Camera permission denied', NotFoundError:'No camera found', NotReadableError:'Camera in use by another app' }[err.name] || err.message || String(err);
+  _setHint(m); toast(m, 'warn');
+}
+async function toggleTorch() {
+  if (!_stream) return;
+  const tr = _stream.getVideoTracks()[0], caps = tr?.getCapabilities?.();
+  if (!caps?.torch) { toast('Torch not supported on this device', 'warn'); return; }
+  _torch = !_torch;
+  try { await tr.applyConstraints({ advanced:[{ torch:_torch }] }); document.getElementById('scTorch').classList.toggle('on', _torch); }
+  catch { toast('Could not toggle torch', 'warn'); }
+}
+async function flipCam() {
+  if (_devices.length < 2) return;
+  _dIdx = (_dIdx + 1) % _devices.length; _torch = false; _locked = false;
+  document.getElementById('scTorch').classList.remove('on');
+  _setHint('Switching camera…');
+  document.getElementById('scFrm').classList.remove('hit');
+  document.getElementById('scCode').classList.remove('show');
+  if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
+  await _startCam();
+}
+
+/* ── SEED ─────────────────────────────────────── */
+function seed() {
+  if (load().length) return;
+  function d(n) { const dt = new Date(); dt.setDate(dt.getDate() + n); return dt.toISOString().split('T')[0]; }
+  save([
+    { id:uid(), upc:'8850006100015', productName:'Thai-Danish UHT Milk Plain 250ml',   boxId:'BOX-001', location:'BOH',  expiryDate:d(1),  qty:12 },
+    { id:uid(), upc:'8850718103027', productName:'Yoplait Greek Yogurt Natural',        boxId:'BOX-002', location:'Span', expiryDate:d(4),  qty:6  },
+    { id:uid(), upc:'8852069011093', productName:'Philadelphia Cream Cheese 200g',      boxId:'BOX-003', location:'BOH',  expiryDate:d(2),  qty:3  },
+    { id:uid(), upc:'8850006110014', productName:'Meiji Fresh Milk Sweetened 200ml',    boxId:'BOX-004', location:'Span', expiryDate:d(9),  qty:24 },
+    { id:uid(), upc:'8851111234500', productName:'Anchor Unsalted Butter 500g',         boxId:'BOX-005', location:'BOH',  expiryDate:d(21), qty:8  },
+    { id:uid(), upc:'8852222345601', productName:'Morinaga Silken Tofu 300g',           boxId:'BOX-006', location:'BOH',  expiryDate:d(6),  qty:15 },
+    { id:uid(), upc:'8853333456702', productName:'CP Eggs Grade A (30 pcs)',            boxId:'BOX-007', location:'Span', expiryDate:d(30), qty:10 },
+    { id:uid(), upc:'8854444567803', productName:'Oscar Mayer Smoked Ham 200g',         boxId:'BOX-008', location:'CA',   expiryDate:d(0),  qty:2  },
+    { id:uid(), upc:'8855555678904', productName:'Emborg Cheese Slices 200g',           boxId:'BOX-009', location:'BOH',  expiryDate:d(13), qty:7  },
+    { id:uid(), upc:'8856666789005', productName:'Arla Sour Cream 200ml',              boxId:'BOX-010', location:'Span', expiryDate:d(5),  qty:4  },
+  ]);
+}
+
+/* ── INIT ─────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  const t = new Date();
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('todayLbl').textContent = `${days[t.getDay()]} ${t.getDate()} ${months[t.getMonth()]} ${t.getFullYear()}`;
+  seed();
+  renderDash();
+});
+
+/* ═══════════════════════════════════════════════
+   PWA — Manifest, Service Worker, Install Prompt
+═══════════════════════════════════════════════ */
+
+/* ── 1. GENERATE APP ICON (SVG → PNG via canvas) ── */
+function makeIconDataURL(size) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  // Background
+  const r = size * 0.18;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.lineTo(size - r, 0);
+  ctx.quadraticCurveTo(size, 0, size, r);
+  ctx.lineTo(size, size - r);
+  ctx.quadraticCurveTo(size, size, size - r, size);
+  ctx.lineTo(r, size);
+  ctx.quadraticCurveTo(0, size, 0, size - r);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.fillStyle = '#0F172A';
+  ctx.fill();
+  // Box icon
+  const s = size * 0.55, ox = (size - s) / 2, oy = (size - s) / 2;
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = size * 0.06;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  // Box body
+  ctx.strokeRect(ox, oy + s * 0.28, s, s * 0.72);
+  // Flap arc
+  ctx.beginPath();
+  ctx.moveTo(ox, oy + s * 0.28);
+  ctx.bezierCurveTo(ox, oy, ox + s * 0.35, oy, ox + s * 0.5, oy + s * 0.1);
+  ctx.bezierCurveTo(ox + s * 0.65, oy, ox + s, oy, ox + s, oy + s * 0.28);
+  ctx.stroke();
+  // Plus
+  ctx.beginPath();
+  ctx.moveTo(ox + s * 0.5, oy + s * 0.46);
+  ctx.lineTo(ox + s * 0.5, oy + s * 0.82);
+  ctx.moveTo(ox + s * 0.32, oy + s * 0.64);
+  ctx.lineTo(ox + s * 0.68, oy + s * 0.64);
+  ctx.stroke();
+  return c.toDataURL('image/png');
+}
+
+/* ── 2. INJECT WEB APP MANIFEST ── */
+function injectManifest() {
+  const icon192 = makeIconDataURL(192);
+  const icon512 = makeIconDataURL(512);
+  const manifest = {
+    name: 'StockPilot — FEFO Inventory',
+    short_name: 'StockPilot',
+    description: 'FEFO Inventory Manager — track expiry dates, manage stock locations',
+    start_url: './',
+    display: 'standalone',
+    orientation: 'portrait-primary',
+    background_color: '#0F172A',
+    theme_color: '#0F172A',
+    categories: ['productivity', 'business'],
+    icons: [
+      { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+      { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+    ],
+    screenshots: [],
+    shortcuts: [
+      { name: 'Add Item', short_name: 'Add', description: 'Add a new inventory item', url: './?action=add' },
+      { name: 'View Alerts', short_name: 'Alerts', description: 'View expiry alerts', url: './?page=alerts' },
+    ],
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel   = 'manifest';
+  link.href  = url;
+  document.head.appendChild(link);
+
+  // Apple touch icon
+  const appleLink = document.createElement('link');
+  appleLink.rel   = 'apple-touch-icon';
+  appleLink.href  = icon192;
+  document.head.appendChild(appleLink);
+
+  // Favicon
+  const favicon = document.createElement('link');
+  favicon.rel   = 'icon';
+  favicon.type  = 'image/png';
+  favicon.href  = makeIconDataURL(32);
+  document.head.appendChild(favicon);
+}
+
+/* ── 3. SERVICE WORKER (injected as blob) ── */
+function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+
+  const CACHE_NAME = 'stockpilot-v1';
+  const swCode = `
+const CACHE = '${CACHE_NAME}';
+const FONTS = [
+  'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap',
+  'https://fonts.gstatic.com'
+];
+
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll([])));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  const url = e.request.url;
+  // Cache-first for fonts, network-first for everything else
+  if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) {
+    e.respondWith(
+      caches.match(e.request).then(cached => cached ||
+        fetch(e.request).then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return res;
+        }).catch(() => cached)
+      )
+    );
+  } else {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request))
+    );
+  }
+});
+`;
+
+  // SW can only register from http(s) — skip silently in blob/preview contexts
+  if (!['https:','http:'].includes(location.protocol)) return;
+
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swURL  = URL.createObjectURL(swBlob);
+
+  navigator.serviceWorker.register(swURL, { scope: './' })
+    .then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw?.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller)
+            toast('Update available — refresh to apply', 'info');
+        });
+      });
+    })
+    .catch(() => { /* SW unavailable — app still fully functional */ });
+}
+
+/* ── 4. INSTALL PROMPT ── */
+let _deferredPrompt = null;
+let _bannerDismissed = sessionStorage.getItem('sp_banner_dismissed');
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _deferredPrompt = e;
+  if (!_bannerDismissed && !window.matchMedia('(display-mode: standalone)').matches) {
+    setTimeout(() => document.getElementById('install-banner').classList.add('show'), 2000);
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').classList.remove('show');
+  _deferredPrompt = null;
+  toast('StockPilot installed successfully!', 'ok');
+});
+
+function installPWA() {
+  if (!_deferredPrompt) {
+    // iOS fallback instructions
+    toast('Tap Share → "Add to Home Screen" on iOS', 'info');
+    document.getElementById('install-banner').classList.remove('show');
+    return;
+  }
+  _deferredPrompt.prompt();
+  _deferredPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') toast('Installing StockPilot…', 'ok');
+    _deferredPrompt = null;
+    document.getElementById('install-banner').classList.remove('show');
+  });
+}
+
+function dismissInstall() {
+  document.getElementById('install-banner').classList.remove('show');
+  sessionStorage.setItem('sp_banner_dismissed', '1');
+  _bannerDismissed = true;
+}
+
+/* ── 5. OFFLINE INDICATOR ── */
+function updateOnlineStatus() {
+  document.getElementById('offline-bar').classList.toggle('show', !navigator.onLine);
+}
+window.addEventListener('online',  updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+/* ── 6. HANDLE ?action / ?page SHORTCUTS ── */
+function handleURLShortcuts() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('action') === 'add') setTimeout(openAdd, 300);
+  if (params.get('page') === 'alerts') setTimeout(() => gp('alerts', document.querySelector('[data-page="alerts"]')), 100);
+}
+
+/* ── BOOTSTRAP ── */
+injectManifest();
+registerSW();
+document.addEventListener('DOMContentLoaded', handleURLShortcuts);
+</script>
+</body>
+</html>
